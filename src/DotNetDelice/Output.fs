@@ -13,7 +13,8 @@ open Spdx
 type Package =
     { Name: string;
       Version: string;
-      Url: string; }
+      Url: string;
+      DisplayName: string }
 
 [<JsonObjectAttribute(NamingStrategyType = typeof<CamelCaseNamingStrategy>)>]
 type PrintableLicense =
@@ -49,12 +50,10 @@ let private prettyPrinter printable =
     printfn "└─┬ Packages:"
     printable.Packages
     |> Seq.iteri (fun i l ->
-           let prefix =
-               if i = (printable.Count - 1) then "└"
-               else "├"
-               if (l.url == null) then
-                   printfn "  %s── %s" prefix l.Name
-               else printfn "  %s── %s (%s)" prefix l.Name url)
+        let prefix =
+            if i = (printable.Count - 1) then "└"
+            else "├"
+        printfn "  %s── %s" prefix l.DisplayName)
     printfn ""
 
 let getSpdxInfo licenseId =
@@ -97,7 +96,11 @@ let prettyPrint (projectSpec : PackageSpec) licenses =
         colorprintfn "$red[Packages without licenses]"
         { Expression = "Missing"
           Count = Seq.length unlicensed
-          Packages = unlicensed |> Seq.map (fun l -> { Name = l.PackageName; Version = l.PackageVersion.OriginalVersion; Url = null })
+          Packages = unlicensed |> Seq.map (fun l ->
+              { Name = l.PackageName
+                Version = l.PackageVersion.OriginalVersion
+                Url = null
+                DisplayName = sprintf "%s@%s" l.PackageName l.PackageVersion.OriginalVersion  })
           IsOsi = false
           IsFsf = false
           IsDeprecatedType = false }
@@ -106,7 +109,11 @@ let prettyPrint (projectSpec : PackageSpec) licenses =
         colorprintfn "$yellow[Packages using the legacy NuGet license structure]"
         { Expression = "Unable to determine"
           Count = Seq.length legacyLicensed
-          Packages = legacyLicensed |> Seq.map (fun l -> { Name = l.PackageName; Version = l.PackageVersion.OriginalVersion; Url = null })
+          Packages = legacyLicensed |> Seq.map (fun l ->
+              { Name = l.PackageName
+                Version = l.PackageVersion.OriginalVersion
+                Url = null
+                DisplayName = sprintf "%s@%s" l.PackageName l.PackageVersion.OriginalVersion })
           IsOsi = false
           IsFsf = false
           IsDeprecatedType = false }
@@ -122,7 +129,11 @@ let prettyPrint (projectSpec : PackageSpec) licenses =
                let (osi, fsf, dep) = getSpdxInfo exp
                { Expression = exp
                  Count = Seq.length packages
-                 Packages = packages |> Seq.map (fun p -> { Name = p.PackageName; Version = p.PackageVersion.OriginalVersion; Url = p.Url })
+                 Packages = packages |> Seq.map (fun p ->
+                     { Name = p.PackageName
+                       Version = p.PackageVersion.OriginalVersion
+                       Url = p.Url
+                       DisplayName = sprintf "%s@%s (%s)" p.PackageName p.PackageVersion.OriginalVersion p.Url })
                  IsOsi = osi
                  IsFsf = fsf
                  IsDeprecatedType = dep })
@@ -164,7 +175,11 @@ let jsonBuilder (projectSpec : PackageSpec) licenses =
         Seq.append (if Seq.length unlicensed > 0 then
                         [| { Expression = "Missing"
                              Count = Seq.length unlicensed
-                             Packages = unlicensed |> Seq.map (fun l -> { Name = l.PackageName; Version = l.PackageVersion.OriginalVersion; Url = null })
+                             Packages = unlicensed |> Seq.map (fun l ->
+                                 { Name = l.PackageName
+                                   Version = l.PackageVersion.OriginalVersion
+                                   Url = null
+                                   DisplayName = sprintf "%s@%s" l.PackageName l.PackageVersion.OriginalVersion })
                              IsOsi = false
                              IsFsf = false
                              IsDeprecatedType = false } |]
@@ -172,7 +187,11 @@ let jsonBuilder (projectSpec : PackageSpec) licenses =
                                     [| { Expression = "Unable to determine"
                                          Count = Seq.length legacyLicensed
                                          Packages =
-                                             legacyLicensed |> Seq.map (fun l -> { Name = l.PackageName; Version = l.PackageVersion.OriginalVersion; Url = l.Url })
+                                             legacyLicensed |> Seq.map (fun l ->
+                                                 { Name = l.PackageName
+                                                   Version = l.PackageVersion.OriginalVersion
+                                                   Url = l.Url
+                                                   DisplayName = sprintf "%s@%s" l.PackageName l.PackageVersion.OriginalVersion })
                                          IsOsi = false
                                          IsFsf = false
                                          IsDeprecatedType = false } |]
@@ -190,7 +209,11 @@ let jsonBuilder (projectSpec : PackageSpec) licenses =
                  let (osi, fsf, dep) = getSpdxInfo exp
                  { Expression = exp
                    Count = Seq.length packages
-                   Packages = packages |> Seq.map (fun p -> { Name = p.PackageName; Version = p.PackageVersion.OriginalVersion; Url = null })
+                   Packages = packages |> Seq.map (fun p ->
+                       { Name = p.PackageName
+                         Version = p.PackageVersion.OriginalVersion
+                         Url = null
+                         DisplayName = sprintf "%s@%s (%s)" p.PackageName p.PackageVersion.OriginalVersion p.Url })
                    IsOsi = osi
                    IsFsf = fsf
                    IsDeprecatedType = dep })
